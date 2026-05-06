@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import '../models/chat_message.dart';
 import '../models/project_artifacts.dart';
@@ -8,6 +8,16 @@ import 'openai_service.dart';
 class ReqGptController extends ChangeNotifier {
   ReqGptController({OpenAiService? openAiService})
       : _openAiService = openAiService ?? OpenAiService() {
+    _addWelcome();
+  }
+
+  final OpenAiService _openAiService;
+  final List<ChatMessage> messages = [];
+  ProjectArtifacts artifacts = const ProjectArtifacts();
+  bool isLoading = false;
+  ThemeMode themeMode = ThemeMode.system;
+
+  void _addWelcome() {
     messages.add(ChatMessage(
       role: MessageRole.assistant,
       content:
@@ -15,10 +25,17 @@ class ReqGptController extends ChangeNotifier {
     ));
   }
 
-  final OpenAiService _openAiService;
-  final List<ChatMessage> messages = [];
-  ProjectArtifacts artifacts = const ProjectArtifacts();
-  bool isLoading = false;
+  void resetConversation() {
+    messages.clear();
+    artifacts = const ProjectArtifacts();
+    _addWelcome();
+    notifyListeners();
+  }
+
+  void setThemeMode(ThemeMode mode) {
+    themeMode = mode;
+    notifyListeners();
+  }
 
   String get conversationContext => messages
       .where((m) => m.role != MessageRole.system)
@@ -49,7 +66,7 @@ class ReqGptController extends ChangeNotifier {
 
   Future<void> generateRequirements() async {
     await _generate(
-      label: 'Requirements',
+      label: 'Gereksinimler',
       prompt: ReqGptPrompts.artifactPrompt(
         'functional and non-functional requirements in EARS style',
         conversationContext,
@@ -60,7 +77,7 @@ class ReqGptController extends ChangeNotifier {
 
   Future<void> generateUseCases() async {
     await _generate(
-      label: 'Use Cases',
+      label: 'Use Case\'ler',
       prompt: ReqGptPrompts.artifactPrompt(
         'use cases, scenarios, and Mermaid UML use case diagram code',
         conversationContext,
@@ -71,12 +88,20 @@ class ReqGptController extends ChangeNotifier {
 
   Future<void> generateTraceability() async {
     await _generate(
-      label: 'Traceability Matrix',
+      label: 'İzlenebilirlik Matrisi',
       prompt: ReqGptPrompts.artifactPrompt(
         'traceability matrix mapping user needs to requirements and artifacts',
         conversationContext,
       ),
       save: (result) => artifacts = artifacts.copyWith(traceability: result),
+    );
+  }
+
+  Future<void> generateMockups() async {
+    await _generate(
+      label: 'Mockup Ekranlar',
+      prompt: ReqGptPrompts.mockupsPrompt(conversationContext),
+      save: (result) => artifacts = artifacts.copyWith(mockups: result),
     );
   }
 
@@ -91,11 +116,14 @@ ${artifacts.requirements}
 Use cases:
 ${artifacts.useCases}
 
+Mockups:
+${artifacts.mockups}
+
 Traceability:
 ${artifacts.traceability}
 ''';
     await _generate(
-      label: 'SRS',
+      label: 'SRS Belgesi',
       prompt: ReqGptPrompts.srsPrompt(context),
       save: (result) => artifacts = artifacts.copyWith(srs: result),
     );
@@ -113,7 +141,7 @@ ${artifacts.traceability}
       save(result);
       messages.add(ChatMessage(
         role: MessageRole.assistant,
-        content: '$label üretildi. Artifacts sekmesinden görüntüleyebilirsin.',
+        content: '✓ $label üretildi. "Artifacts" sekmesinden görüntüleyebilirsin.',
       ));
     } catch (e) {
       messages.add(ChatMessage(

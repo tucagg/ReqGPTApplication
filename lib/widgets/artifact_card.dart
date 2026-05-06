@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ArtifactCard extends StatelessWidget {
   const ArtifactCard({
@@ -6,11 +8,28 @@ class ArtifactCard extends StatelessWidget {
     required this.title,
     required this.content,
     required this.onGenerate,
+    required this.isLoading,
   });
 
   final String title;
   final String content;
   final VoidCallback onGenerate;
+  final bool isLoading;
+
+  bool get _hasContent => content.isNotEmpty;
+
+  Future<void> _copyToClipboard(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: content));
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$title panoya kopyalandı.')),
+      );
+    }
+  }
+
+  Future<void> _share() async {
+    await Share.share(content, subject: title);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,17 +45,42 @@ class ArtifactCard extends StatelessWidget {
                 Expanded(
                   child: Text(title, style: Theme.of(context).textTheme.titleLarge),
                 ),
+                if (_hasContent) ...[
+                  IconButton(
+                    tooltip: 'Panoya kopyala',
+                    icon: const Icon(Icons.copy_outlined),
+                    onPressed: () => _copyToClipboard(context),
+                  ),
+                  IconButton(
+                    tooltip: 'Paylaş',
+                    icon: const Icon(Icons.share_outlined),
+                    onPressed: _share,
+                  ),
+                ],
+                const SizedBox(width: 4),
                 FilledButton.icon(
-                  onPressed: onGenerate,
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Generate'),
+                  onPressed: isLoading ? null : onGenerate,
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.auto_awesome),
+                  label: Text(_hasContent ? 'Yenile' : 'Üret'),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            SelectableText(
-              content.isEmpty ? 'Henüz üretilmedi.' : content,
-            ),
+            if (_hasContent)
+              SelectableText(content)
+            else
+              Text(
+                'Henüz üretilmedi.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
           ],
         ),
       ),

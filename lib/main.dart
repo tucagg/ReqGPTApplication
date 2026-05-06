@@ -8,7 +8,12 @@ import 'services/reqgpt_controller.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
-  runApp(const ReqGptApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ReqGptController(),
+      child: const ReqGptApp(),
+    ),
+  );
 }
 
 class ReqGptApp extends StatelessWidget {
@@ -16,24 +21,26 @@ class ReqGptApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ReqGptController(),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'ReqGPT',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF10A37F)),
-          useMaterial3: true,
-        ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF10A37F),
-            brightness: Brightness.dark,
-          ),
-          useMaterial3: true,
-        ),
-        home: const HomeScreen(),
+    final themeMode = context.select<ReqGptController, ThemeMode>(
+      (c) => c.themeMode,
+    );
+
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'ReqGPT',
+      themeMode: themeMode,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF10A37F)),
+        useMaterial3: true,
       ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF10A37F),
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+      ),
+      home: const HomeScreen(),
     );
   }
 }

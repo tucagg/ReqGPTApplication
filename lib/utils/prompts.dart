@@ -22,6 +22,20 @@ $context
 Output must be clear, structured, and suitable for a Software Requirements Specification.
 ''';
 
+  static String mockupsPrompt(String context) => '''
+Based on the following project context, generate ASCII/text-art wireframe mockups for the key screens of the system.
+
+For each screen:
+1. Give the screen a title.
+2. Draw a simple ASCII wireframe showing the layout (use characters like +, -, |, [ ], etc.).
+3. Briefly describe the purpose and key interactions of that screen.
+
+Cover the most important user-facing screens derived from the requirements.
+
+Project context:
+$context
+''';
+
   static String srsPrompt(String context) => '''
 Compile a concise Software Requirements Specification in Markdown.
 Include:
