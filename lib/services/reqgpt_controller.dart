@@ -1,36 +1,123 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 import '../models/chat_message.dart';
 import '../models/project_artifacts.dart';
+import '../models/session.dart';
 import '../utils/prompts.dart';
 import 'openai_service.dart';
+import 'storage_service.dart';
 
 enum ArtifactKey { requirements, useCases, traceability, mockups, srs }
 
 class ReqGptController extends ChangeNotifier {
-  ReqGptController({OpenAiService? openAiService})
-      : _openAiService = openAiService ?? OpenAiService() {
-    _addWelcome();
+  ReqGptController({OpenAiService? openAiService, StorageService? storageService})
+      : _openAiService = openAiService ?? OpenAiService(),
+        _storage = storageService ?? StorageService() {
+    _loadAll();
   }
 
   final OpenAiService _openAiService;
+  final StorageService _storage;
+
+  // ── Durum ────────────────────────────────────────────────────────────────
+
   final List<ChatMessage> messages = [];
   ProjectArtifacts artifacts = const ProjectArtifacts();
   ThemeMode themeMode = ThemeMode.system;
 
+  /// Tüm oturumlar (geçmiş listesi için)
+  final List<Session> sessions = [];
+
+  /// Aktif oturum kimliği
+  String _currentSessionId = '';
+  String get currentSessionId => _currentSessionId;
+
   bool _chatLoading = false;
   ArtifactKey? _activeArtifact;
+  bool isSessionLoaded = false;
 
-  /// true sadece sohbet cevabı beklenirken
   bool get isChatLoading => _chatLoading;
-
-  /// Hangi artifact üretiliyor (null ise hiçbiri)
   ArtifactKey? get activeArtifact => _activeArtifact;
-
-  /// Herhangi bir işlem devam ediyor mu (chat veya artifact)
   bool get isBusy => _chatLoading || _activeArtifact != null;
 
-  void _addWelcome() {
+  // ── Yükleme / Kaydetme ───────────────────────────────────────────────────
+
+  Future<void> _loadAll() async {
+    final data = await _storage.load();
+
+    if (data != null) {
+      final rawTheme = data['themeMode'] as String?;
+      if (rawTheme != null) {
+        themeMode = ThemeMode.values.byName(rawTheme);
+      }
+
+      final rawSessions = data['sessions'] as List<dynamic>?;
+      if (rawSessions != null) {
+        sessions.addAll(
+          rawSessions.map((e) => Session.fromJson(e as Map<String, dynamic>)),
+        );
+      }
+
+      _currentSessionId = data['currentSessionId'] as String? ?? '';
+    }
+
+    // Aktif oturumu mesajlara yükle
+    final current = _sessionById(_currentSessionId);
+    if (current != null) {
+      messages.addAll(current.messages);
+      artifacts = current.artifacts;
+    } else {
+      // Hiç oturum yoksa yeni başlat
+      _startFreshSession();
+    }
+
+    isSessionLoaded = true;
+    notifyListeners();
+  }
+
+  Future<void> _persist() async {
+    // Aktif oturumu sessions listesinde güncelle
+    _upsertCurrentSession();
+
+    await _storage.save({
+      'themeMode': themeMode.name,
+      'currentSessionId': _currentSessionId,
+      'sessions': sessions.map((s) => s.toJson()).toList(),
+    });
+  }
+
+  /// Aktif oturumu sessions listesinde oluştur veya güncelle.
+  void _upsertCurrentSession() {
+    final title = Session.titleFrom(messages);
+    final updated = Session(
+      id: _currentSessionId,
+      title: title,
+      createdAt: _sessionById(_currentSessionId)?.createdAt ?? DateTime.now(),
+      updatedAt: DateTime.now(),
+      messages: List.from(messages),
+      artifacts: artifacts,
+    );
+    final idx = sessions.indexWhere((s) => s.id == _currentSessionId);
+    if (idx >= 0) {
+      sessions[idx] = updated;
+    } else {
+      sessions.insert(0, updated);
+    }
+  }
+
+  Session? _sessionById(String id) {
+    try {
+      return sessions.firstWhere((s) => s.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _startFreshSession() {
+    _currentSessionId = const Uuid().v4();
+    messages.clear();
+    artifacts = const ProjectArtifacts();
     messages.add(ChatMessage(
       role: MessageRole.assistant,
       content:
@@ -38,17 +125,55 @@ class ReqGptController extends ChangeNotifier {
     ));
   }
 
-  void resetConversation() {
+  // ── Oturum işlemleri ─────────────────────────────────────────────────────
+
+  /// Yeni boş oturum başlat (mevcut oturumu geçmişe yazar).
+  Future<void> newSession() async {
+    _upsertCurrentSession();
+    _startFreshSession();
+    await _persist();
+    notifyListeners();
+  }
+
+  /// Geçmişten bir oturumu aktif oturum yap.
+  Future<void> switchToSession(String id) async {
+    if (id == _currentSessionId) return;
+
+    // Önce mevcut oturumu kaydet
+    _upsertCurrentSession();
+
+    final target = _sessionById(id);
+    if (target == null) return;
+
+    _currentSessionId = id;
     messages.clear();
-    artifacts = const ProjectArtifacts();
-    _addWelcome();
+    messages.addAll(target.messages);
+    artifacts = target.artifacts;
+
+    await _persist();
+    notifyListeners();
+  }
+
+  /// Geçmişten bir oturumu sil.
+  Future<void> deleteSession(String id) async {
+    if (id == _currentSessionId) {
+      // Silinen oturum aktifse yeni oturum başlat
+      sessions.removeWhere((s) => s.id == id);
+      _startFreshSession();
+    } else {
+      sessions.removeWhere((s) => s.id == id);
+    }
+    await _persist();
     notifyListeners();
   }
 
   void setThemeMode(ThemeMode mode) {
     themeMode = mode;
+    _persist();
     notifyListeners();
   }
+
+  // ── Sohbet ───────────────────────────────────────────────────────────────
 
   String get conversationContext => messages
       .where((m) => m.role != MessageRole.system)
@@ -73,9 +198,12 @@ class ReqGptController extends ChangeNotifier {
       ));
     } finally {
       _chatLoading = false;
+      await _persist();
       notifyListeners();
     }
   }
+
+  // ── Artifact üretimi ─────────────────────────────────────────────────────
 
   Future<void> generateRequirements() async {
     await _generate(
@@ -123,7 +251,7 @@ class ReqGptController extends ChangeNotifier {
   }
 
   Future<void> generateSrs() async {
-    final context = '''
+    final ctx = '''
 Conversation:
 $conversationContext
 
@@ -142,7 +270,7 @@ ${artifacts.traceability}
     await _generate(
       key: ArtifactKey.srs,
       label: 'SRS Belgesi',
-      prompt: ReqGptPrompts.srsPrompt(context),
+      prompt: ReqGptPrompts.srsPrompt(ctx),
       save: (r) => artifacts = artifacts.copyWith(srs: r),
     );
   }
@@ -169,6 +297,7 @@ ${artifacts.traceability}
       ));
     } finally {
       _activeArtifact = null;
+      await _persist();
       notifyListeners();
     }
   }

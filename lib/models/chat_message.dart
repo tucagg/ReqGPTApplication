@@ -16,10 +16,22 @@ class ChatMessage {
   final String content;
   final DateTime createdAt;
 
-  Map<String, String> toOpenAiMessage() {
-    return {
-      'role': role.name,
-      'content': content,
-    };
-  }
+  Map<String, String> toOpenAiMessage() => {
+        'role': role.name,
+        'content': content,
+      };
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'role': role.name,
+        'content': content,
+        'createdAt': createdAt.toIso8601String(),
+      };
+
+  factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
+        id: json['id'] as String,
+        role: MessageRole.values.byName(json['role'] as String),
+        content: json['content'] as String,
+        createdAt: DateTime.parse(json['createdAt'] as String),
+      );
 }

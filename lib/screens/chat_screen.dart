@@ -5,7 +5,10 @@ import '../services/reqgpt_controller.dart';
 import '../widgets/chat_bubble.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  const ChatScreen({super.key, required this.onNewSession});
+
+  /// Yeni oturum başlatıldığında Chat sekmesinde kalınmasını sağlar.
+  final VoidCallback onNewSession;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -42,19 +45,29 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollToBottom();
   }
 
-  Future<void> _confirmReset(ReqGptController controller) async {
+  Future<void> _confirmNewSession(ReqGptController controller) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Yeni Proje'),
-        content: const Text('Mevcut konuşma ve tüm artifact\'lar silinecek. Devam edilsin mi?'),
+        content: const Text(
+            'Mevcut konuşma geçmişe kaydedilecek ve yeni bir oturum başlatılacak.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sıfırla')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Başlat'),
+          ),
         ],
       ),
     );
-    if (confirmed == true) controller.resetConversation();
+    if (confirmed == true) {
+      await controller.newSession();
+      widget.onNewSession();
+    }
   }
 
   @override
@@ -82,20 +95,27 @@ class _ChatScreenState extends State<ChatScreen> {
                   controller.generateMockups();
                 case 'srs':
                   controller.generateSrs();
-                case 'reset':
-                  _confirmReset(controller);
+                case 'new':
+                  _confirmNewSession(controller);
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'requirements', child: Text('Gereksinimleri Üret (EARS)')),
-              const PopupMenuItem(value: 'usecases', child: Text('Use Case\'leri Üret')),
-              const PopupMenuItem(value: 'traceability', child: Text('İzlenebilirlik Matrisi Üret')),
-              const PopupMenuItem(value: 'mockups', child: Text('Mockup Ekranlar Üret')),
+              const PopupMenuItem(
+                  value: 'requirements', child: Text('Gereksinimleri Üret (EARS)')),
+              const PopupMenuItem(
+                  value: 'usecases', child: Text("Use Case'leri Üret")),
+              const PopupMenuItem(
+                  value: 'traceability', child: Text('İzlenebilirlik Matrisi Üret')),
+              const PopupMenuItem(
+                  value: 'mockups', child: Text('Mockup Ekranlar Üret')),
               const PopupMenuItem(value: 'srs', child: Text('SRS Belgesi Derle')),
               const PopupMenuDivider(),
               const PopupMenuItem(
-                value: 'reset',
-                child: Text('Yeni Proje Başlat', style: TextStyle(color: Colors.red)),
+                value: 'new',
+                child: Text(
+                  'Yeni Proje Başlat',
+                  style: TextStyle(color: Colors.red),
+                ),
               ),
             ],
           ),
@@ -108,9 +128,8 @@ class _ChatScreenState extends State<ChatScreen> {
               controller: _scrollController,
               padding: const EdgeInsets.only(top: 12, bottom: 12),
               itemCount: controller.messages.length,
-              itemBuilder: (context, index) => ChatBubble(
-                message: controller.messages[index],
-              ),
+              itemBuilder: (context, index) =>
+                  ChatBubble(message: controller.messages[index]),
             ),
           ),
           if (controller.isChatLoading)
