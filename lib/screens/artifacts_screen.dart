@@ -11,7 +11,8 @@ class ArtifactsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = context.watch<ReqGptController>();
     final artifacts = controller.artifacts;
-    final loading = controller.isLoading;
+    final active = controller.activeArtifact;
+    final busy = controller.isBusy;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Artifacts')),
@@ -21,31 +22,36 @@ class ArtifactsScreen extends StatelessWidget {
             title: 'EARS Gereksinimleri',
             content: artifacts.requirements,
             onGenerate: controller.generateRequirements,
-            isLoading: loading,
+            isThisGenerating: active == ArtifactKey.requirements,
+            anyBusy: busy,
           ),
           ArtifactCard(
-            title: 'Use Case\'ler + Mermaid UML',
+            title: "Use Case'ler + Mermaid UML",
             content: artifacts.useCases,
             onGenerate: controller.generateUseCases,
-            isLoading: loading,
+            isThisGenerating: active == ArtifactKey.useCases,
+            anyBusy: busy,
           ),
           ArtifactCard(
             title: 'İzlenebilirlik Matrisi',
             content: artifacts.traceability,
             onGenerate: controller.generateTraceability,
-            isLoading: loading,
+            isThisGenerating: active == ArtifactKey.traceability,
+            anyBusy: busy,
           ),
           ArtifactCard(
             title: 'Mockup Ekranlar',
             content: artifacts.mockups,
             onGenerate: controller.generateMockups,
-            isLoading: loading,
+            isThisGenerating: active == ArtifactKey.mockups,
+            anyBusy: busy,
           ),
           ArtifactCard(
             title: 'SRS Belgesi (Markdown)',
             content: artifacts.srs,
             onGenerate: controller.generateSrs,
-            isLoading: loading,
+            isThisGenerating: active == ArtifactKey.srs,
+            anyBusy: busy,
           ),
         ],
       ),

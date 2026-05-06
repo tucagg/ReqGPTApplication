@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:share_plus/share_plus.dart';
 
 class ArtifactCard extends StatelessWidget {
@@ -8,13 +9,19 @@ class ArtifactCard extends StatelessWidget {
     required this.title,
     required this.content,
     required this.onGenerate,
-    required this.isLoading,
+    required this.isThisGenerating,
+    required this.anyBusy,
   });
 
   final String title;
   final String content;
   final VoidCallback onGenerate;
-  final bool isLoading;
+
+  /// Bu kartın artifact'ı şu an üretiliyor mu → spinner göster
+  final bool isThisGenerating;
+
+  /// Herhangi bir işlem devam ediyor mu → butonu devre dışı bırak
+  final bool anyBusy;
 
   bool get _hasContent => content.isNotEmpty;
 
@@ -49,18 +56,18 @@ class ArtifactCard extends StatelessWidget {
                   IconButton(
                     tooltip: 'Panoya kopyala',
                     icon: const Icon(Icons.copy_outlined),
-                    onPressed: () => _copyToClipboard(context),
+                    onPressed: anyBusy ? null : () => _copyToClipboard(context),
                   ),
                   IconButton(
                     tooltip: 'Paylaş',
                     icon: const Icon(Icons.share_outlined),
-                    onPressed: _share,
+                    onPressed: anyBusy ? null : _share,
                   ),
                 ],
                 const SizedBox(width: 4),
                 FilledButton.icon(
-                  onPressed: isLoading ? null : onGenerate,
-                  icon: isLoading
+                  onPressed: anyBusy ? null : onGenerate,
+                  icon: isThisGenerating
                       ? const SizedBox(
                           width: 16,
                           height: 16,
@@ -73,7 +80,7 @@ class ArtifactCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             if (_hasContent)
-              SelectableText(content)
+              MarkdownBody(data: content, selectable: true)
             else
               Text(
                 'Henüz üretilmedi.',

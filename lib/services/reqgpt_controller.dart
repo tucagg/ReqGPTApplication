@@ -5,6 +5,8 @@ import '../models/project_artifacts.dart';
 import '../utils/prompts.dart';
 import 'openai_service.dart';
 
+enum ArtifactKey { requirements, useCases, traceability, mockups, srs }
+
 class ReqGptController extends ChangeNotifier {
   ReqGptController({OpenAiService? openAiService})
       : _openAiService = openAiService ?? OpenAiService() {
@@ -14,8 +16,19 @@ class ReqGptController extends ChangeNotifier {
   final OpenAiService _openAiService;
   final List<ChatMessage> messages = [];
   ProjectArtifacts artifacts = const ProjectArtifacts();
-  bool isLoading = false;
   ThemeMode themeMode = ThemeMode.system;
+
+  bool _chatLoading = false;
+  ArtifactKey? _activeArtifact;
+
+  /// true sadece sohbet cevabı beklenirken
+  bool get isChatLoading => _chatLoading;
+
+  /// Hangi artifact üretiliyor (null ise hiçbiri)
+  ArtifactKey? get activeArtifact => _activeArtifact;
+
+  /// Herhangi bir işlem devam ediyor mu (chat veya artifact)
+  bool get isBusy => _chatLoading || _activeArtifact != null;
 
   void _addWelcome() {
     messages.add(ChatMessage(
@@ -47,7 +60,7 @@ class ReqGptController extends ChangeNotifier {
     if (trimmed.isEmpty) return;
 
     messages.add(ChatMessage(role: MessageRole.user, content: trimmed));
-    isLoading = true;
+    _chatLoading = true;
     notifyListeners();
 
     try {
@@ -59,49 +72,53 @@ class ReqGptController extends ChangeNotifier {
         content: 'Bir hata oluştu: $e',
       ));
     } finally {
-      isLoading = false;
+      _chatLoading = false;
       notifyListeners();
     }
   }
 
   Future<void> generateRequirements() async {
     await _generate(
+      key: ArtifactKey.requirements,
       label: 'Gereksinimler',
       prompt: ReqGptPrompts.artifactPrompt(
         'functional and non-functional requirements in EARS style',
         conversationContext,
       ),
-      save: (result) => artifacts = artifacts.copyWith(requirements: result),
+      save: (r) => artifacts = artifacts.copyWith(requirements: r),
     );
   }
 
   Future<void> generateUseCases() async {
     await _generate(
-      label: 'Use Case\'ler',
+      key: ArtifactKey.useCases,
+      label: "Use Case'ler",
       prompt: ReqGptPrompts.artifactPrompt(
         'use cases, scenarios, and Mermaid UML use case diagram code',
         conversationContext,
       ),
-      save: (result) => artifacts = artifacts.copyWith(useCases: result),
+      save: (r) => artifacts = artifacts.copyWith(useCases: r),
     );
   }
 
   Future<void> generateTraceability() async {
     await _generate(
+      key: ArtifactKey.traceability,
       label: 'İzlenebilirlik Matrisi',
       prompt: ReqGptPrompts.artifactPrompt(
         'traceability matrix mapping user needs to requirements and artifacts',
         conversationContext,
       ),
-      save: (result) => artifacts = artifacts.copyWith(traceability: result),
+      save: (r) => artifacts = artifacts.copyWith(traceability: r),
     );
   }
 
   Future<void> generateMockups() async {
     await _generate(
+      key: ArtifactKey.mockups,
       label: 'Mockup Ekranlar',
       prompt: ReqGptPrompts.mockupsPrompt(conversationContext),
-      save: (result) => artifacts = artifacts.copyWith(mockups: result),
+      save: (r) => artifacts = artifacts.copyWith(mockups: r),
     );
   }
 
@@ -123,18 +140,20 @@ Traceability:
 ${artifacts.traceability}
 ''';
     await _generate(
+      key: ArtifactKey.srs,
       label: 'SRS Belgesi',
       prompt: ReqGptPrompts.srsPrompt(context),
-      save: (result) => artifacts = artifacts.copyWith(srs: result),
+      save: (r) => artifacts = artifacts.copyWith(srs: r),
     );
   }
 
   Future<void> _generate({
+    required ArtifactKey key,
     required String label,
     required String prompt,
     required void Function(String result) save,
   }) async {
-    isLoading = true;
+    _activeArtifact = key;
     notifyListeners();
     try {
       final result = await _openAiService.generateArtifact(prompt);
@@ -149,7 +168,7 @@ ${artifacts.traceability}
         content: '$label üretilemedi: $e',
       ));
     } finally {
-      isLoading = false;
+      _activeArtifact = null;
       notifyListeners();
     }
   }

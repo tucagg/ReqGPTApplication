@@ -36,7 +36,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _send(ReqGptController controller) {
     final text = _textController.text.trim();
-    if (text.isEmpty || controller.isLoading) return;
+    if (text.isEmpty || controller.isBusy) return;
     _textController.clear();
     controller.sendMessage(text).then((_) => _scrollToBottom());
     _scrollToBottom();
@@ -61,8 +61,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final controller = context.watch<ReqGptController>();
 
-    // Scroll after each rebuild triggered by new messages
-    if (!controller.isLoading) _scrollToBottom();
+    if (!controller.isBusy) _scrollToBottom();
 
     return Scaffold(
       appBar: AppBar(
@@ -114,7 +113,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
-          if (controller.isLoading)
+          if (controller.isChatLoading)
             LinearProgressIndicator(
               backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             ),
@@ -138,7 +137,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
-                    onPressed: controller.isLoading ? null : () => _send(controller),
+                    onPressed: controller.isBusy ? null : () => _send(controller),
                     child: const Icon(Icons.send),
                   ),
                 ],
