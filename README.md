@@ -1,104 +1,62 @@
-# ReqGPT Flutter
+# ReqGPT
 
-ReqGPT is a Flutter mobile prototype for AI-augmented requirements elicitation and analysis. It helps a user start from a project idea, ask clarifying questions, and generate structured software requirements artifacts.
+AI-powered requirements engineering tool. Describe your project idea and get requirements, use cases, traceability matrix, and SRS document generated automatically.
 
-## Core Features
+🌐 **Live Demo:** [tucagg.github.io/ReqGPTApplication](https://tucagg.github.io/ReqGPTApplication/)
 
-- Chat-style requirements elicitation
-- GPT API integration through OpenAI Chat Completions
-- Requirements generation in EARS style
-- Functional and non-functional requirement separation
-- Use case scenario and Mermaid diagram text generation
-- Traceability matrix draft generation
-- SRS markdown compilation
-- Local in-memory prototype state
+---
 
-## Requirement Analysis Summary
+## Getting Started
 
-### Problem
-Requirements elicitation depends heavily on communication with domain experts. When domain expertise is limited or inconsistent, requirements become ambiguous, incomplete, and hard to validate.
+ReqGPT runs entirely in your browser. No account or installation needed.
 
-### Proposed Solution
-ReqGPT acts as an AI-assisted analyst. It asks structured clarification questions, refines scope, and generates standardized requirements artifacts.
+### 1. Get an OpenAI API Key
+Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys) and create a new API key.
 
-### Target Users
-- Software analysts
-- Students learning requirements engineering
-- Product owners
-- Early-stage startup teams
+### 2. Enter Your Key in the App
+Open the app → go to **Settings** → paste your API key (`sk-...`) → click **Save**.
 
-### Main Modules
+Your key is stored only in your browser's local storage and is never sent anywhere other than OpenAI's API.
 
-1. **Project Intake**
-   - User enters initial idea or problem statement.
-   - AI identifies domain, stakeholders, goals, assumptions, and missing details.
+### 3. Start a Project
+Go to the **Chat** tab, describe your project idea, and let ReqGPT guide you through the requirements elicitation process.
 
-2. **Iterative Elicitation Chat**
-   - AI asks clarification questions.
-   - User answers progressively.
-   - App stores the evolving context.
+---
 
-3. **Requirements Generator**
-   - Generates functional requirements.
-   - Generates non-functional requirements.
-   - Uses EARS-inspired sentence patterns.
+## Features
 
-4. **Use Case Generator**
-   - Produces actors, goals, preconditions, main flow, alternative flow, and postconditions.
-   - Produces Mermaid UML text.
+- **Chat-based elicitation** — AI asks clarifying questions to refine your project scope
+- **Requirements generation** — Functional and non-functional requirements in EARS style
+- **Use case generation** — Actors, flows, and Mermaid UML diagrams
+- **Traceability matrix** — Maps user needs to requirements and artifacts
+- **SRS compiler** — Full Software Requirements Specification in Markdown
+- **Session history** — Multiple projects stored locally in your browser
+- **Dark / light theme**
 
-5. **Traceability Matrix**
-   - Maps user needs to generated requirements and artifacts.
-
-6. **SRS Compiler**
-   - Compiles overview, scope, requirements, use cases, assumptions, constraints, and traceability into markdown.
+---
 
 ## Tech Stack
 
-- Flutter
+- Flutter Web
 - Dart
 - Provider
-- OpenAI API via `http`
-- `flutter_dotenv` for API key loading
+- OpenAI API (`gpt-4o-mini` by default)
+- GitHub Actions + GitHub Pages for deployment
 
-## Setup
+---
+
+## Local Development
 
 ```bash
+git clone https://github.com/tucagg/ReqGPTApplication.git
+cd ReqGPTApplication
 flutter pub get
-cp .env.example .env
+flutter run -d chrome
 ```
 
-Edit `.env`:
+No `.env` file needed — API key is entered through the Settings screen.
 
-```env
-OPENAI_API_KEY=sk-your-api-key-here
-OPENAI_MODEL=gpt-4o-mini
-```
-
-Run:
-
-```bash
-flutter run
-```
-
-## Important Security Note
-
-This prototype calls OpenAI directly from the mobile app for demo purposes. For production, route API calls through your own backend so API keys are never shipped inside the mobile app.
-
-## Suggested 10-Week Development Plan
-
-| Week | Work |
-|---|---|
-| 1 | Finalize requirements, user stories, scope |
-| 2 | Flutter project setup and UI wireframes |
-| 3 | Chat screen and session state |
-| 4 | GPT API integration |
-| 5 | EARS requirements generator |
-| 6 | Use case and Mermaid generator |
-| 7 | Traceability matrix and SRS compiler |
-| 8 | Export/share SRS markdown |
-| 9 | Testing, prompt refinement, UX improvements |
-| 10 | Final demo, documentation, presentation |
+---
 
 ## Folder Structure
 
@@ -112,12 +70,10 @@ lib/
   widgets/
 ```
 
-## Production Improvements
+---
 
-- Backend proxy for GPT API
-- Firebase/Supabase authentication
-- Persistent database
-- PDF/DOCX export
-- Mermaid preview renderer
-- Mockup image generation through backend
-- Role-based project collaboration
+## Privacy
+
+- Your API key is stored only in your browser's local storage.
+- No data is sent to any server other than OpenAI's API.
+- No analytics, no tracking.
