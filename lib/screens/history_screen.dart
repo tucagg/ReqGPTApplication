@@ -7,7 +7,7 @@ import '../services/reqgpt_controller.dart';
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key, required this.onSessionSelected});
 
-  /// Oturum seçilince Chat sekmesine geçmek için çağrılır.
+  /// Called when a session is selected to switch to the Chat tab.
   final VoidCallback onSessionSelected;
 
   @override
@@ -20,11 +20,11 @@ class HistoryScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Geçmiş'),
+        title: const Text('History'),
         actions: [
           if (sorted.length > 1)
             IconButton(
-              tooltip: 'Tüm geçmişi sil',
+              tooltip: 'Clear all history',
               icon: const Icon(Icons.delete_sweep_outlined),
               onPressed: () => _confirmClearAll(context, controller),
             ),
@@ -32,7 +32,7 @@ class HistoryScreen extends StatelessWidget {
       ),
       body: sorted.isEmpty
           ? const Center(
-              child: Text('Henüz kaydedilmiş proje yok.'),
+              child: Text('No saved projects yet.'),
             )
           : ListView.separated(
               itemCount: sorted.length,
@@ -87,7 +87,7 @@ class HistoryScreen extends StatelessWidget {
                     ),
                     trailing: isCurrent
                         ? const Chip(
-                            label: Text('Aktif'),
+                            label: Text('Active'),
                             visualDensity: VisualDensity.compact,
                           )
                         : const Icon(Icons.chevron_right),
@@ -105,26 +105,26 @@ class HistoryScreen extends StatelessWidget {
   }
 
   String _subtitle(DateTime updatedAt, int userCount, bool hasArtifacts) {
-    final date = DateFormat('d MMM yyyy, HH:mm', 'tr_TR').format(updatedAt);
-    final artifacts = hasArtifacts ? ' · Artifact var' : '';
-    return '$date · $userCount mesaj$artifacts';
+    final date = DateFormat('d MMM yyyy, HH:mm').format(updatedAt);
+    final artifacts = hasArtifacts ? ' · Has artifacts' : '';
+    return '$date · $userCount messages$artifacts';
   }
 
   Future<bool?> _confirmDelete(BuildContext context) {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Oturumu Sil'),
-        content: const Text('Bu proje oturumu kalıcı olarak silinecek.'),
+        title: const Text('Delete Session'),
+        content: const Text('This project session will be permanently deleted.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Sil'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -136,17 +136,17 @@ class HistoryScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Tüm Geçmişi Temizle'),
-        content: const Text('Tüm proje oturumları silinecek ve yeni bir oturum başlatılacak.'),
+        title: const Text('Clear All History'),
+        content: const Text('All project sessions will be deleted and a new session will start.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Temizle'),
+            child: const Text('Clear'),
           ),
         ],
       ),

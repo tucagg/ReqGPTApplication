@@ -10,7 +10,7 @@ import 'services/reqgpt_controller.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
-  await initializeDateFormatting('tr_TR');
+  await initializeDateFormatting('en');
   runApp(
     ChangeNotifierProvider(
       create: (_) => ReqGptController(),
@@ -37,7 +37,7 @@ class ReqGptApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [Locale('tr', 'TR'), Locale('en')],
+      supportedLocales: const [Locale('en')],
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF10A37F)),
         useMaterial3: true,

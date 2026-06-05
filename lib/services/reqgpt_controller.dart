@@ -125,7 +125,7 @@ class ReqGptController extends ChangeNotifier {
     messages.add(ChatMessage(
       role: MessageRole.assistant,
       content:
-          'Merhaba, ben ReqGPT. Proje fikrini yaz; gereksinimleri netleştirmek için sorular sorup SRS çıktısı hazırlayabilirim.',
+          'Hello, I\'m ReqGPT. Describe your project idea and I\'ll ask clarifying questions to help you elicit requirements and generate an SRS document.',
     ));
   }
 
@@ -210,7 +210,7 @@ class ReqGptController extends ChangeNotifier {
     } catch (e) {
       messages.add(ChatMessage(
         role: MessageRole.assistant,
-        content: 'Bir hata oluştu: $e',
+        content: 'An error occurred: $e',
       ));
     } finally {
       _chatLoading = false;
@@ -224,7 +224,7 @@ class ReqGptController extends ChangeNotifier {
   Future<void> generateRequirements() async {
     await _generate(
       key: ArtifactKey.requirements,
-      label: 'Gereksinimler',
+      label: 'Requirements',
       prompt: ReqGptPrompts.artifactPrompt(
         'functional and non-functional requirements in EARS style',
         conversationContext,
@@ -236,7 +236,7 @@ class ReqGptController extends ChangeNotifier {
   Future<void> generateUseCases() async {
     await _generate(
       key: ArtifactKey.useCases,
-      label: "Use Case'ler",
+      label: 'Use Cases',
       prompt: ReqGptPrompts.artifactPrompt(
         'use cases, scenarios, and Mermaid UML use case diagram code',
         conversationContext,
@@ -248,7 +248,7 @@ class ReqGptController extends ChangeNotifier {
   Future<void> generateTraceability() async {
     await _generate(
       key: ArtifactKey.traceability,
-      label: 'İzlenebilirlik Matrisi',
+      label: 'Traceability Matrix',
       prompt: ReqGptPrompts.artifactPrompt(
         'traceability matrix mapping user needs to requirements and artifacts',
         conversationContext,
@@ -260,7 +260,7 @@ class ReqGptController extends ChangeNotifier {
   Future<void> generateMockups() async {
     await _generate(
       key: ArtifactKey.mockups,
-      label: 'Mockup Ekranlar',
+      label: 'Mockup Screens',
       prompt: ReqGptPrompts.mockupsPrompt(conversationContext),
       save: (r) => artifacts = artifacts.copyWith(mockups: r),
     );
@@ -285,7 +285,7 @@ ${artifacts.traceability}
 ''';
     await _generate(
       key: ArtifactKey.srs,
-      label: 'SRS Belgesi',
+      label: 'SRS Document',
       prompt: ReqGptPrompts.srsPrompt(ctx),
       save: (r) => artifacts = artifacts.copyWith(srs: r),
     );
@@ -304,12 +304,12 @@ ${artifacts.traceability}
       save(result);
       messages.add(ChatMessage(
         role: MessageRole.assistant,
-        content: '✓ $label üretildi. "Artifacts" sekmesinden görüntüleyebilirsin.',
+        content: '✓ $label generated. You can view it in the "Artifacts" tab.',
       ));
     } catch (e) {
       messages.add(ChatMessage(
         role: MessageRole.assistant,
-        content: '$label üretilemedi: $e',
+        content: 'Failed to generate $label: $e',
       ));
     } finally {
       _activeArtifact = null;

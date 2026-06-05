@@ -35,7 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     controller.setApiKey(_keyController.text);
     controller.setApiModel(_modelController.text);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Ayarlar kaydedildi'), duration: Duration(seconds: 2)),
+      const SnackBar(content: Text('Settings saved'), duration: Duration(seconds: 2)),
     );
   }
 
@@ -45,36 +45,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final hasKey = controller.apiKey.startsWith('sk-');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ayarlar')),
+      appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // ── Görünüm ──────────────────────────────────────────────────────
-          const _SectionHeader('Görünüm'),
+          const _SectionHeader('Appearance'),
           Card(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Tema'),
+                  const Text('Theme'),
                   const SizedBox(height: 10),
                   SegmentedButton<ThemeMode>(
                     segments: const [
                       ButtonSegment(
                         value: ThemeMode.light,
                         icon: Icon(Icons.light_mode_outlined),
-                        label: Text('Açık'),
+                        label: Text('Light'),
                       ),
                       ButtonSegment(
                         value: ThemeMode.system,
                         icon: Icon(Icons.brightness_auto_outlined),
-                        label: Text('Sistem'),
+                        label: Text('System'),
                       ),
                       ButtonSegment(
                         value: ThemeMode.dark,
                         icon: Icon(Icons.dark_mode_outlined),
-                        label: Text('Koyu'),
+                        label: Text('Dark'),
                       ),
                     ],
                     selected: {controller.themeMode},
@@ -104,7 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        hasKey ? 'API anahtarı yapılandırıldı' : 'API anahtarı girilmedi — demo mod',
+                        hasKey ? 'API key configured' : 'API key not set — demo mode',
                         style: TextStyle(
                           color: hasKey ? Colors.green : Colors.orange,
                           fontWeight: FontWeight.w500,
@@ -119,7 +119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     controller: _keyController,
                     obscureText: _obscure,
                     decoration: InputDecoration(
-                      labelText: 'OpenAI API Anahtarı',
+                      labelText: 'OpenAI API Key',
                       hintText: 'sk-...',
                       border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
@@ -147,13 +147,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: FilledButton.icon(
                       onPressed: _save,
                       icon: const Icon(Icons.save_outlined),
-                      label: const Text('Kaydet'),
+                      label: const Text('Save'),
                     ),
                   ),
 
                   const SizedBox(height: 12),
                   const Text(
-                    'API anahtarınız yalnızca bu cihazda saklanır ve hiçbir yere gönderilmez.',
+                    'Your API key is stored only in this browser and is never sent anywhere other than OpenAI.',
                     style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
@@ -163,13 +163,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
 
           // ── Hakkında ─────────────────────────────────────────────────────
-          const _SectionHeader('Hakkında'),
+          const _SectionHeader('About'),
           const Card(
             child: Padding(
               padding: EdgeInsets.all(16),
               child: Text(
-                'ReqGPT — AI destekli gereksinim mühendisliği aracı.\n\n'
-                'API anahtarınızı platform.openai.com adresinden alabilirsiniz.',
+                'ReqGPT — AI-powered requirements engineering tool.\n\n'
+                'You can get your API key from platform.openai.com/api-keys.',
               ),
             ),
           ),

@@ -7,7 +7,7 @@ import '../widgets/chat_bubble.dart';
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, required this.onNewSession});
 
-  /// Yeni oturum başlatıldığında Chat sekmesinde kalınmasını sağlar.
+  /// Called when a new session is started to keep the Chat tab active.
   final VoidCallback onNewSession;
 
   @override
@@ -49,17 +49,17 @@ class _ChatScreenState extends State<ChatScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Yeni Proje'),
+        title: const Text('New Project'),
         content: const Text(
-            'Mevcut konuşma geçmişe kaydedilecek ve yeni bir oturum başlatılacak.'),
+            'The current conversation will be saved to history and a new session will start.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Başlat'),
+            child: const Text('Start'),
           ),
         ],
       ),
@@ -81,7 +81,7 @@ class _ChatScreenState extends State<ChatScreen> {
         title: const Text('ReqGPT'),
         actions: [
           PopupMenuButton<String>(
-            tooltip: 'İşlemler',
+            tooltip: 'Actions',
             icon: const Icon(Icons.more_vert),
             onSelected: (value) {
               switch (value) {
@@ -101,19 +101,19 @@ class _ChatScreenState extends State<ChatScreen> {
             },
             itemBuilder: (context) => [
               const PopupMenuItem(
-                  value: 'requirements', child: Text('Gereksinimleri Üret (EARS)')),
+                  value: 'requirements', child: Text('Generate Requirements (EARS)')),
               const PopupMenuItem(
-                  value: 'usecases', child: Text("Use Case'leri Üret")),
+                  value: 'usecases', child: Text('Generate Use Cases')),
               const PopupMenuItem(
-                  value: 'traceability', child: Text('İzlenebilirlik Matrisi Üret')),
+                  value: 'traceability', child: Text('Generate Traceability Matrix')),
               const PopupMenuItem(
-                  value: 'mockups', child: Text('Mockup Ekranlar Üret')),
-              const PopupMenuItem(value: 'srs', child: Text('SRS Belgesi Derle')),
+                  value: 'mockups', child: Text('Generate Mockup Screens')),
+              const PopupMenuItem(value: 'srs', child: Text('Compile SRS Document')),
               const PopupMenuDivider(),
               const PopupMenuItem(
                 value: 'new',
                 child: Text(
-                  'Yeni Proje Başlat',
+                  'New Project',
                   style: TextStyle(color: Colors.red),
                 ),
               ),
@@ -149,7 +149,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _send(controller),
                       decoration: const InputDecoration(
-                        hintText: 'Proje fikrini veya cevabını yaz...',
+                        hintText: 'Describe your project idea or answer a question...',
                         border: OutlineInputBorder(),
                       ),
                     ),

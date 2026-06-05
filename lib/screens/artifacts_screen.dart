@@ -19,35 +19,35 @@ class ArtifactsScreen extends StatelessWidget {
       body: ListView(
         children: [
           ArtifactCard(
-            title: 'EARS Gereksinimleri',
+            title: 'EARS Requirements',
             content: artifacts.requirements,
             onGenerate: controller.generateRequirements,
             isThisGenerating: active == ArtifactKey.requirements,
             anyBusy: busy,
           ),
           ArtifactCard(
-            title: "Use Case'ler + Mermaid UML",
+            title: 'Use Cases + Mermaid UML',
             content: artifacts.useCases,
             onGenerate: controller.generateUseCases,
             isThisGenerating: active == ArtifactKey.useCases,
             anyBusy: busy,
           ),
           ArtifactCard(
-            title: 'İzlenebilirlik Matrisi',
+            title: 'Traceability Matrix',
             content: artifacts.traceability,
             onGenerate: controller.generateTraceability,
             isThisGenerating: active == ArtifactKey.traceability,
             anyBusy: busy,
           ),
           ArtifactCard(
-            title: 'Mockup Ekranlar',
+            title: 'Mockup Screens',
             content: artifacts.mockups,
             onGenerate: controller.generateMockups,
             isThisGenerating: active == ArtifactKey.mockups,
             anyBusy: busy,
           ),
           ArtifactCard(
-            title: 'SRS Belgesi (Markdown)',
+            title: 'SRS Document (Markdown)',
             content: artifacts.srs,
             onGenerate: controller.generateSrs,
             isThisGenerating: active == ArtifactKey.srs,
