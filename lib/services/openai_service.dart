@@ -1,18 +1,19 @@
 import 'dart:convert';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/chat_message.dart';
 import '../utils/prompts.dart';
 
 class OpenAiService {
-  OpenAiService({http.Client? client}) : _client = client ?? http.Client();
+  OpenAiService({http.Client? client, String apiKey = '', String model = 'gpt-4o-mini'})
+      : _client = client ?? http.Client(),
+        _apiKey = apiKey,
+        _model = model;
 
   final http.Client _client;
-
-  String get _apiKey => dotenv.env['OPENAI_API_KEY'] ?? '';
-  String get _model => dotenv.env['OPENAI_MODEL'] ?? 'gpt-4o-mini';
+  final String _apiKey;
+  final String _model;
 
   Future<String> chat(List<ChatMessage> messages) async {
     if (_apiKey.isEmpty || _apiKey == 'sk-your-api-key-here') {

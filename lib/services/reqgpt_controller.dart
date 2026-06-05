@@ -11,13 +11,11 @@ import 'storage_service.dart';
 enum ArtifactKey { requirements, useCases, traceability, mockups, srs }
 
 class ReqGptController extends ChangeNotifier {
-  ReqGptController({OpenAiService? openAiService, StorageService? storageService})
-      : _openAiService = openAiService ?? OpenAiService(),
-        _storage = storageService ?? StorageService() {
+  ReqGptController({StorageService? storageService})
+      : _storage = storageService ?? StorageService() {
     _loadAll();
   }
 
-  final OpenAiService _openAiService;
   final StorageService _storage;
 
   // ── Durum ────────────────────────────────────────────────────────────────
@@ -25,6 +23,8 @@ class ReqGptController extends ChangeNotifier {
   final List<ChatMessage> messages = [];
   ProjectArtifacts artifacts = const ProjectArtifacts();
   ThemeMode themeMode = ThemeMode.system;
+  String apiKey = '';
+  String apiModel = 'gpt-4o-mini';
 
   /// Tüm oturumlar (geçmiş listesi için)
   final List<Session> sessions = [];
@@ -51,6 +51,8 @@ class ReqGptController extends ChangeNotifier {
       if (rawTheme != null) {
         themeMode = ThemeMode.values.byName(rawTheme);
       }
+      apiKey = data['apiKey'] as String? ?? '';
+      apiModel = data['apiModel'] as String? ?? 'gpt-4o-mini';
 
       final rawSessions = data['sessions'] as List<dynamic>?;
       if (rawSessions != null) {
@@ -82,6 +84,8 @@ class ReqGptController extends ChangeNotifier {
 
     await _storage.save({
       'themeMode': themeMode.name,
+      'apiKey': apiKey,
+      'apiModel': apiModel,
       'currentSessionId': _currentSessionId,
       'sessions': sessions.map((s) => s.toJson()).toList(),
     });
@@ -173,6 +177,18 @@ class ReqGptController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setApiKey(String key) {
+    apiKey = key.trim();
+    _persist();
+    notifyListeners();
+  }
+
+  void setApiModel(String model) {
+    apiModel = model.trim();
+    _persist();
+    notifyListeners();
+  }
+
   // ── Sohbet ───────────────────────────────────────────────────────────────
 
   String get conversationContext => messages
@@ -189,7 +205,7 @@ class ReqGptController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _openAiService.chat(messages);
+      final response = await OpenAiService(apiKey: apiKey, model: apiModel).chat(messages);
       messages.add(ChatMessage(role: MessageRole.assistant, content: response));
     } catch (e) {
       messages.add(ChatMessage(
@@ -284,7 +300,7 @@ ${artifacts.traceability}
     _activeArtifact = key;
     notifyListeners();
     try {
-      final result = await _openAiService.generateArtifact(prompt);
+      final result = await OpenAiService(apiKey: apiKey, model: apiModel).generateArtifact(prompt);
       save(result);
       messages.add(ChatMessage(
         role: MessageRole.assistant,
