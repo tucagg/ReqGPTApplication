@@ -1,4 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class MermaidView extends StatefulWidget {
@@ -19,6 +24,7 @@ class _MermaidViewState extends State<MermaidView> {
   late final WebViewController _controller;
   bool _loading = true;
   bool _error = false;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -75,6 +81,43 @@ class _MermaidViewState extends State<MermaidView> {
 ''';
   }
 
+  Future<void> _downloadImage(BuildContext context) async {
+    if (_loading || _error) return;
+    setState(() => _saving = true);
+    try {
+      final result = await _controller.runJavaScriptReturningResult(
+        "document.querySelector('#diagram svg') ? document.querySelector('#diagram svg').outerHTML : ''",
+      );
+
+      final svgHtml = result.toString().replaceAll(RegExp(r'^"|"$'), '');
+      if (svgHtml.isEmpty) throw Exception('Diyagram henüz hazır değil');
+
+      final svgContent = svgHtml
+          .replaceAll(r'\n', '\n')
+          .replaceAll(r'\"', '"')
+          .replaceAll(r"\'", "'");
+
+      final dir = await getTemporaryDirectory();
+      final file = File(
+        '${dir.path}/mermaid_${DateTime.now().millisecondsSinceEpoch}.svg',
+      );
+      await file.writeAsString(svgContent, encoding: utf8);
+
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'image/svg+xml')],
+        subject: 'Mermaid Diyagramı',
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('İndirilemedi: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_error) return const SizedBox.shrink();
@@ -85,6 +128,33 @@ class _MermaidViewState extends State<MermaidView> {
           WebViewWidget(controller: _controller),
           if (_loading)
             const Center(child: CircularProgressIndicator()),
+          if (!_loading && !_error)
+            Positioned(
+              top: 6,
+              right: 6,
+              child: _saving
+                  ? const SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Material(
+                      color: Colors.black45,
+                      borderRadius: BorderRadius.circular(20),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => _downloadImage(context),
+                        child: const Padding(
+                          padding: EdgeInsets.all(6),
+                          child: Icon(
+                            Icons.download_outlined,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+            ),
         ],
       ),
     );
