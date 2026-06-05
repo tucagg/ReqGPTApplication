@@ -5,10 +5,13 @@ import '../services/reqgpt_controller.dart';
 import '../widgets/chat_bubble.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, required this.onNewSession});
+  const ChatScreen({super.key, required this.onNewSession, required this.onGoToSettings});
 
   /// Called when a new session is started to keep the Chat tab active.
   final VoidCallback onNewSession;
+
+  /// Called when the user taps "Go to Settings" in the API key banner.
+  final VoidCallback onGoToSettings;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -123,6 +126,20 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(
         children: [
+          if (!controller.apiKey.startsWith('sk-'))
+            MaterialBanner(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              content: const Text(
+                '🔑  No API key set. Go to Settings → paste your OpenAI API key (sk-...) → Save.\n'
+                'Get a key at platform.openai.com/api-keys',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: widget.onGoToSettings,
+                  child: const Text('Go to Settings'),
+                ),
+              ],
+            ),
           Expanded(
             child: ListView.builder(
               controller: _scrollController,

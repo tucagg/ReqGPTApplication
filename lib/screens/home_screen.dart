@@ -30,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final screens = [
-      ChatScreen(onNewSession: _switchToChat),
+      ChatScreen(onNewSession: _switchToChat, onGoToSettings: () => setState(() => _index = 3)),
       const ArtifactsScreen(),
       HistoryScreen(onSessionSelected: _switchToChat),
       const SettingsScreen(),
