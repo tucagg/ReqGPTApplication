@@ -2,24 +2,37 @@
 
 AI-powered requirements engineering tool. Describe your project idea and get requirements, use cases, traceability matrix, and SRS document generated automatically.
 
+Available on **Web**, **Android**, **iOS**, **macOS**, **Linux**, and **Windows**.
+
 🌐 **Live Demo:** [tucagg.github.io/ReqGPTApplication](https://tucagg.github.io/ReqGPTApplication/)
 
 ---
 
 ## Getting Started
 
-ReqGPT runs entirely in your browser. No account or installation needed.
+### Web
+Open the live demo — no installation needed.
 
-### 1. Get an OpenAI API Key
-Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys) and create a new API key.
+### Mobile & Desktop
+Clone the repo and run on your target platform:
 
-### 2. Enter Your Key in the App
-Open the app → go to **Settings** → paste your API key (`sk-...`) → click **Save**.
+```bash
+git clone https://github.com/tucagg/ReqGPTApplication.git
+cd ReqGPTApplication
+flutter pub get
+flutter run                        # connected device / emulator
+flutter run -d macos               # macOS
+flutter run -d linux               # Linux
+flutter run -d windows             # Windows
+flutter run -d chrome              # Web (browser)
+```
 
-Your key is stored only in your browser's local storage and is never sent anywhere other than OpenAI's API.
+### API Key Setup
+On first launch, open the **Settings** tab, paste your OpenAI API key (`sk-...`), and tap **Save**.
 
-### 3. Start a Project
-Go to the **Chat** tab, describe your project idea, and let ReqGPT guide you through the requirements elicitation process.
+Your key is stored only on your device and is never sent anywhere other than OpenAI's API.
+
+> Don't have a key? Get one at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
 
 ---
 
@@ -30,31 +43,18 @@ Go to the **Chat** tab, describe your project idea, and let ReqGPT guide you thr
 - **Use case generation** — Actors, flows, and Mermaid UML diagrams
 - **Traceability matrix** — Maps user needs to requirements and artifacts
 - **SRS compiler** — Full Software Requirements Specification in Markdown
-- **Session history** — Multiple projects stored locally in your browser
-- **Dark / light theme**
+- **Session history** — Multiple projects stored locally on your device
+- **Dark / light / system theme**
+- **Cross-platform** — Web, Android, iOS, macOS, Linux, Windows
 
 ---
 
 ## Tech Stack
 
-- Flutter Web
-- Dart
+- Flutter (Dart)
 - Provider
 - OpenAI API (`gpt-4o-mini` by default)
-- GitHub Actions + GitHub Pages for deployment
-
----
-
-## Local Development
-
-```bash
-git clone https://github.com/tucagg/ReqGPTApplication.git
-cd ReqGPTApplication
-flutter pub get
-flutter run -d chrome
-```
-
-No `.env` file needed — API key is entered through the Settings screen.
+- GitHub Actions + GitHub Pages for web deployment
 
 ---
 
@@ -74,6 +74,6 @@ lib/
 
 ## Privacy
 
-- Your API key is stored only in your browser's local storage.
+- Your API key is stored only on your device (local storage / shared preferences).
 - No data is sent to any server other than OpenAI's API.
 - No analytics, no tracking.
