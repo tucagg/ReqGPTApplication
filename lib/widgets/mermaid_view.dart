@@ -1,11 +1,19 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
+/// Mermaid kodunu mermaid.ink servisi üzerinden PNG'ye render eder.
+///
+/// webview_flutter yalnızca Android/iOS/macOS'u desteklediği için
+/// web ve Linux'ta diyagram görünmüyordu. Render'ı sunucu tarafında
+/// yapmak bu sorunu çözer, ancak mermaid.ink'in /svg/ çıktısı etiketleri
+/// <foreignObject> içine gömülü HTML olarak üretiyor — flutter_svg saf SVG
+/// dışındaki HTML içeriğini render edemediği için yazılar kayboluyordu.
+/// /img/ (PNG) uç noktası ise sunucuda gerçek bir tarayıcıyla tam render
+/// alıp piksel görüntü döndürdüğü için bu sorunu yaşamıyor.
 class MermaidView extends StatefulWidget {
   const MermaidView({
     super.key,
@@ -21,92 +29,66 @@ class MermaidView extends StatefulWidget {
 }
 
 class _MermaidViewState extends State<MermaidView> {
-  late final WebViewController _controller;
   bool _loading = true;
   bool _error = false;
   bool _saving = false;
+  Uint8List? _imageBytes;
 
   @override
   void initState() {
     super.initState();
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..addJavaScriptChannel(
-        'MermaidError',
-        onMessageReceived: (_) {
-          if (mounted) {
-            setState(() {
-              _loading = false;
-              _error = true;
-            });
-            widget.onRenderError();
-          }
-        },
-      )
-      ..setNavigationDelegate(NavigationDelegate(
-        onPageFinished: (_) {
-          if (mounted) setState(() => _loading = false);
-        },
-      ))
-      ..loadHtmlString(_buildHtml(widget.code));
+    _fetchDiagram();
   }
 
-  String _buildHtml(String code) {
-    final safeCode = code
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;');
-    return '''
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-  body { margin: 0; padding: 8px; background: white; display: flex; justify-content: center; }
-  #diagram svg { max-width: 100%; height: auto; }
-</style>
-</head>
-<body>
-<div id="diagram" class="mermaid">$safeCode</div>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-<script>
-  mermaid.initialize({ startOnLoad: false, theme: 'default' });
-  mermaid.run({ querySelector: '#diagram' })
-    .catch(function(e) {
-      MermaidError.postMessage(e ? e.toString() : 'render error');
+  @override
+  void didUpdateWidget(covariant MermaidView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.code != widget.code) {
+      _fetchDiagram();
+    }
+  }
+
+  Future<void> _fetchDiagram() async {
+    setState(() {
+      _loading = true;
+      _error = false;
     });
-</script>
-</body>
-</html>
-''';
+    try {
+      final encoded =
+          base64Url.encode(utf8.encode(widget.code)).replaceAll('=', '');
+      final uri = Uri.parse(
+        'https://mermaid.ink/img/$encoded?type=png&theme=default&backgroundColor=white',
+      );
+      final response = await http.get(uri);
+      if (response.statusCode != 200 || response.bodyBytes.isEmpty) {
+        throw Exception('HTTP ${response.statusCode}');
+      }
+      if (!mounted) return;
+      setState(() {
+        _imageBytes = response.bodyBytes;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = true;
+      });
+      widget.onRenderError();
+    }
   }
 
   Future<void> _downloadImage(BuildContext context) async {
-    if (_loading || _error) return;
+    final bytes = _imageBytes;
+    if (bytes == null) return;
     setState(() => _saving = true);
     try {
-      final result = await _controller.runJavaScriptReturningResult(
-        "document.querySelector('#diagram svg') ? document.querySelector('#diagram svg').outerHTML : ''",
+      final file = XFile.fromData(
+        bytes,
+        name: 'mermaid_diagram.png',
+        mimeType: 'image/png',
       );
-
-      final svgHtml = result.toString().replaceAll(RegExp(r'^"|"$'), '');
-      if (svgHtml.isEmpty) throw Exception('Diyagram henüz hazır değil');
-
-      final svgContent = svgHtml
-          .replaceAll(r'\n', '\n')
-          .replaceAll(r'\"', '"')
-          .replaceAll(r"\'", "'");
-
-      final dir = await getTemporaryDirectory();
-      final file = File(
-        '${dir.path}/mermaid_${DateTime.now().millisecondsSinceEpoch}.svg',
-      );
-      await file.writeAsString(svgContent, encoding: utf8);
-
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'image/svg+xml')],
-        subject: 'Mermaid Diyagramı',
-      );
+      await Share.shareXFiles([file], subject: 'Mermaid Diyagramı');
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -121,14 +103,22 @@ class _MermaidViewState extends State<MermaidView> {
   @override
   Widget build(BuildContext context) {
     if (_error) return const SizedBox.shrink();
+
     return SizedBox(
       height: 300,
       child: Stack(
         children: [
-          WebViewWidget(controller: _controller),
-          if (_loading)
-            const Center(child: CircularProgressIndicator()),
-          if (!_loading && !_error)
+          Center(
+            child: _loading || _imageBytes == null
+                ? const CircularProgressIndicator()
+                : InteractiveViewer(
+                    child: Image.memory(
+                      _imageBytes!,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+          ),
+          if (!_loading && _imageBytes != null)
             Positioned(
               top: 6,
               right: 6,
