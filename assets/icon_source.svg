@@ -1,0 +1,44 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10A37F"/>
+      <stop offset="100%" stop-color="#0B7A60"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <!-- Chat bubble -->
+  <path d="M128 168
+           C128 145 146 128 168 128
+           L344 128
+           C366 128 384 145 384 168
+           L384 288
+           C384 311 366 328 344 328
+           L232 328
+           L176 372
+           C170 377 160 373 160 365
+           L160 328
+           L168 328
+           C146 328 128 311 128 288
+           Z"
+        fill="#FFFFFF"/>
+
+  <!-- Sparkle (AI) accent -->
+  <g fill="#10A37F">
+    <path d="M384 196
+             L394 222
+             L420 232
+             L394 242
+             L384 268
+             L374 242
+             L348 232
+             L374 222
+             Z"/>
+  </g>
+
+  <!-- EARS-style requirement lines -->
+  <rect x="168" y="186" width="120" height="16" rx="8" fill="#10A37F"/>
+  <rect x="168" y="220" width="160" height="16" rx="8" fill="#10A37F" opacity="0.55"/>
+  <rect x="168" y="254" width="96" height="16" rx="8" fill="#10A37F" opacity="0.3"/>
+</svg>
